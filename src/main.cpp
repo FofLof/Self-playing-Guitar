@@ -7,6 +7,8 @@ using namespace std;
  const int TEMPO = 1000;
  const int UP_DEGREES = 0;
 const int DOWN_DEGREES = 0; //@TODO get correct values
+const int LEFT_PLUCK_POSITION = 0;
+  const int RIGHT_PLUCK_POSITION = 0;
 
 class Note
 {
@@ -49,6 +51,26 @@ class ServoNote
       servo.write(DOWN_DEGREES);
     }
 };
+
+class ServoPluck 
+{
+  public:
+    Servo servo;
+    bool pluckState; 
+    ServoPluck(int portNumber) {
+      servo.attach(portNumber);
+    }
+    void pluckString(){
+      if (pluckState) {
+        servo.write(LEFT_PLUCK_POSITION);
+      } else {
+        servo.write(RIGHT_PLUCK_POSITION);
+      }
+      pluckState = !pluckState;
+    }
+};
+
+
 
 
 void setup() {
