@@ -1,0 +1,12 @@
+{new ServoNote(1, 'A'), new ServoNote(2, 'A'), new ServoNote(3, 'A')},
+  {new ServoNote(4, 'B#'), new ServoNote(5, 'B#'), new ServoNote(6, 'B#')},
+  {new ServoNote(7, 'B'), new ServoNote(8, 'B'), new ServoNote(9, 'B')},
+  {new ServoNote(10, 'C'), new ServoNote(11, 'C'), new ServoNote(12, 'C')},
+  {new ServoNote(13, 'D#'), new ServoNote(14, 'D#'), new ServoNote(15, 'D#')},
+  {new ServoNote(16, 'D'), new ServoNote(19, 'D'), new ServoNote(21, 'D')},
+  {new ServoNote(22, 'E#'), new ServoNote(23, 'E#'), new ServoNote(24, 'E#')},
+  {new ServoNote(22, 'E'), new ServoNote(23, 'E'), new ServoNote(24, 'E')},
+  {new ServoNote(25, 'F'), new ServoNote(26, 'F'), new ServoNote(27, 'F')},
+  {new ServoNote(28, 'G#'), new ServoNote(29, 'G#'), new ServoNote(27, 'G#')},
+  {new ServoNote(28, 'G'), new ServoNote(29, 'G'), new ServoNote(27, 'G')},
+  {new ServoNote(28, 'A#'), new ServoNote(29, 'A#'), new ServoNote(27, 'A#')}

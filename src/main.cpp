@@ -4,6 +4,7 @@
 #include <Servo.h>
 using namespace std;
 
+
 const int TEMPO = 1000;
 const int UP_DEGREES = 0;
 const int DOWN_DEGREES = 0; //@TODO get correct values
@@ -33,6 +34,8 @@ public:
   int getTiming() { return timing; }
 
   int getType() { return type; }
+
+  bool getIsPaired() { return isPaired; } 
 
   bool getIsComplete() { return isComplete; }
   void setIsComplete(bool isComplete) { this->isComplete = isComplete; }
@@ -82,63 +85,26 @@ class ServoPluck
 
 ServoNote servoNotes[12][3];
 
-// ServoNote* servoNotes[12][3] = {
-//   {new ServoNote(1, 'A'), new ServoNote(2, 'A'), new ServoNote(3, 'A')},
-//   {new ServoNote(4, 'B#'), new ServoNote(5, 'B#'), new ServoNote(6, 'B#')},
-//   {new ServoNote(7, 'B'), new ServoNote(8, 'B'), new ServoNote(9, 'B')},
-//   {new ServoNote(10, 'C'), new ServoNote(11, 'C'), new ServoNote(12, 'C')},
-//   {new ServoNote(13, 'D#'), new ServoNote(14, 'D#'), new ServoNote(15, 'D#')},
-//   {new ServoNote(16, 'D'), new ServoNote(19, 'D'), new ServoNote(21, 'D')},
-//   {new ServoNote(22, 'E#'), new ServoNote(23, 'E#'), new ServoNote(24, 'E#')},
-//   {new ServoNote(22, 'E'), new ServoNote(23, 'E'), new ServoNote(24, 'E')},
-//   {new ServoNote(25, 'F'), new ServoNote(26, 'F'), new ServoNote(27, 'F')},
-//   {new ServoNote(28, 'G#'), new ServoNote(29, 'G#'), new ServoNote(27, 'G#')},
-//   {new ServoNote(28, 'G'), new ServoNote(29, 'G'), new ServoNote(27, 'G')},
-//   {new ServoNote(28, 'A#'), new ServoNote(29, 'A#'), new ServoNote(27, 'A#')}
-// };
+void initializeServoNotes() {
+  int notes[12] = {'A', 'B#','B', 'C', 'D#', 'D', 'E#', 'E', 'F', 'G#', 'G', 'A#'};
 
-Note twinkleTwinkleLittleStar[] = {
-    Note(250, 'G', false),
-    Note(250, 'G', false),
-    Note(250, 'D', false),
-    Note(250, 'D', false ),
+  int portCount = 1;
+  int noteCount = 0;
+  for (int i = 0; i < 12; i++) {
+    for (int j = 0; j < 3; j++) {
+        servoNotes[i][j] = ServoNote(portCount, notes[noteCount]);
+        portCount = portCount + 1;
+      }
+      noteCount = noteCount + 1;
+  }
+}
 
-    Note(250, 'E', false),
-    Note(250, 'E', false ),
-    Note(500, 'D', false),
-
-    Note(250, 'C', false),
-    Note(250, 'C', false ),
-    Note(250, 'B', false),
-    Note(250, 'B', false),
-
-    Note(250, 'A', false),
-    Note(250, 'A', false ),
-    Note(500, 'G', false),
-
-    Note(250, 'D', false),
-    Note(250, 'D', false),
-    Note(250, 'C', false),
-    Note(250, 'C', false ),
-
-    Note(250, 'B', false),
-    Note(250, 'B', false ),
-    Note(500, 'A', false),
-
-    Note(250, 'D', false),
-    Note(250, 'D', false),
-    Note(250, 'C', false),
-    Note(250, 'C', false ),
-
-    Note(250, 'B', false),
-    Note(250, 'B', false ),
-    Note(500, 'A', false),
-  };
 
 void playNote(int note) {
   int stringOffset = 0;
   stringOffset = isFirstStringBeingUsed ? stringOffset + 1 : stringOffset;
-  stringOffset = isSecondStringBeingUsed ? stringOffset + 1 : stringOffset;
+  stringOffset = isSecondStringBeingUsed ? stringOffset + 2 : stringOffset;
+
   switch (note)
   {
   case 'A':
@@ -180,49 +146,84 @@ void playNote(int note) {
   }
 }
 
-// void allUp() { //If it becomes a performance issue than only bring it up if there is an active servo on that string
-//   for (int i = 0; i < 12; i++) 
-//     for (int j = 0; j < 3; i++) 
-//       servoNotes[i][j].bringServoUp(); //lazy solution for now
-    
-// }
-
-int notes[12] = {'A', 'B#','B', 'C', 'D#', 'D', 'E#', 'E', 'F', 'G#', 'G', 'A#'};
-
-void initializeServoNotes() {
-  int portCount = 1;
-  int noteCount = 0;
-  for (int i = 0; i < 12; i++) {
-    for (int j = 0; j < 3; j++) {
-        servoNotes[i][j] = ServoNote(portCount, notes[noteCount]);
-        portCount = portCount + 1;
-      }//lazy solution for now
-      noteCount = noteCount + 1;
-  }
+void reset() { //If it becomes a performance issue than only bring it up if there is an active servo on that string
+  isFirstStringBeingUsed = false;
+  isSecondStringBeingUsed = false;
+  isThirdStringBeingUsed = false;
+  for (int i = 0; i < 12; i++)
+    for (int j = 0; j < 3; i++)
+      servoNotes[i][j].bringServoUp(); // lazy solution for now
 }
+
+void playSong(Note song[])
+{
+  int noteBeingPlayed = 0;
+  int noteChange = 0;
+  reset();
+  delay(song[noteBeingPlayed].getTiming());
+  playNote(song[noteBeingPlayed].getType());
+  isFirstStringBeingUsed = true;
+  noteChange = 1;
+  if (song[noteBeingPlayed].getIsPaired())
+  {
+    playNote(song[noteBeingPlayed + 1].getType());
+    isSecondStringBeingUsed = true;
+    noteChange = 2;
+    if (song[noteBeingPlayed + 1].getIsPaired())
+    {
+      isThirdStringBeingUsed = true;
+      playNote(song[noteBeingPlayed + 2].getType()); // lazy solution fix later if feel like it ig but like rest of the code sucks anyway
+      noteChange = 3;
+    }
+  }
+  noteBeingPlayed += noteChange;
+}
+
+Note twinkleTwinkleLittleStar[] = {
+    Note(250, 'G', false),
+    Note(250, 'G', false),
+    Note(250, 'D', false),
+    Note(250, 'D', false),
+
+    Note(250, 'E', false),
+    Note(250, 'E', false),
+    Note(500, 'D', false),
+
+    Note(250, 'C', false),
+    Note(250, 'C', false),
+    Note(250, 'B', false),
+    Note(250, 'B', false),
+
+    Note(250, 'A', false),
+    Note(250, 'A', false),
+    Note(500, 'G', false),
+
+    Note(250, 'D', false),
+    Note(250, 'D', false),
+    Note(250, 'C', false),
+    Note(250, 'C', false),
+
+    Note(250, 'B', false),
+    Note(250, 'B', false),
+    Note(500, 'A', false),
+
+    Note(250, 'D', false),
+    Note(250, 'D', false),
+    Note(250, 'C', false),
+    Note(250, 'C', false),
+
+    Note(250, 'B', false),
+    Note(250, 'B', false),
+    Note(500, 'A', false),
+};
 
 void setup() {
   Serial.begin(9600);
   initializeServoNotes();
-  // Note note(250, "C");
-  // Serial.print(note.getTiming());
-
-  // music.push_back(Note(251, "C"));
-  // Serial.println(music.at(0).getTiming());
-
-  // for (int i = 0; i < 12; i++) {
-  //   for (int j = 0; j < 3; j++) {
-  //     Serial.print(servoNotes[i][j].getNote());
-  //     Serial.print(" ");
-  //   }
-  //   Serial.println();
-  // }
+ 
   // put your setup code here, to run once:
 }
 
 void loop() {
-  // Serial.print("sad");
-  // put your main code here, to run repeatedly:
-  // Serial.println(music.at(1).getTiming());
-  // Serial.println("Parsed");
+  playSong(twinkleTwinkleLittleStar);
 }
