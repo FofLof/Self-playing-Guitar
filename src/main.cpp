@@ -1,92 +1,30 @@
 #include <Arduino.h>
 // #include <ArrayList.h>
-#include <Vector.h>
 #include <Servo.h>
-using namespace std;
+#include <Wire.h>
+#include <Adafruit_MCP23X17.h>
+#include <Note.h>
+#include <Music.h>
+#include <ServoNote.h>
+#include <ServoPluck.h>
 
 
 const int TEMPO = 1000;
-const int UP_DEGREES = 0;
-const int DOWN_DEGREES = 0; //@TODO get correct values
-const int LEFT_PLUCK_POSITION = 0;
-const int RIGHT_PLUCK_POSITION = 0;
 
 bool isFirstStringBeingUsed = false;
 bool isSecondStringBeingUsed = false;
 bool isThirdStringBeingUsed = false;
 
-class Note
-{
-public:
-  int timing;
-  int type;
-  bool isComplete = false;
-  bool isPaired;
+Adafruit_MCP23X17 mcp;
+Adafruit_MCP23X17 mcp1;
 
-  // Note();
-  Note(int time, int type, bool isPaired)
-  {
-    timing = time;
-    this->type = type;
-    this->isPaired = isPaired;
-  }
-
-  int getTiming() { return timing; }
-
-  int getType() { return type; }
-
-  bool getIsPaired() { return isPaired; } 
-
-  bool getIsComplete() { return isComplete; }
-  void setIsComplete(bool isComplete) { this->isComplete = isComplete; }
-};
-
-class ServoNote 
-{
-  public:
-    int note;
-    Servo servo;
-    ServoNote() {
-      note = 0;
-    }
-    ServoNote(int portNumber, int note) {
-      this->note = note;
-      servo.attach(portNumber);
-    }
-    
-    void bringServoUp() {
-      servo.write(UP_DEGREES);
-    }
-
-    void bringServoDown() {
-      servo.write(DOWN_DEGREES);
-    }
-
-    int getNote() { return note;}
-};
-
-class ServoPluck 
-{
-  public:
-    Servo servo;
-    bool pluckState; 
-    ServoPluck(int portNumber) {
-      servo.attach(portNumber);
-    }
-    void pluckString(){
-      if (pluckState) {
-        servo.write(LEFT_PLUCK_POSITION);
-      } else {
-        servo.write(RIGHT_PLUCK_POSITION);
-      }
-      pluckState = !pluckState;
-    }
-};
 
 ServoNote servoNotes[12][3];
 
+ServoPluck servoPluck[3] = {ServoPluck(1), ServoPluck(2), ServoPluck(3)};
+
 void initializeServoNotes() {
-  int notes[12] = {'A', 'B#','B', 'C', 'D#', 'D', 'E#', 'E', 'F', 'G#', 'G', 'A#'};
+  int notes[13] = {'E','F','G', 'G#', 'A', 'A#', 'B', 'B#', 'C', 'C#', 'D', 'D#', 'EH'};
 
   int portCount = 1;
   int noteCount = 0;
@@ -107,43 +45,49 @@ void playNote(int note) {
 
   switch (note)
   {
-  case 'A':
-    servoNotes[0][0 + stringOffset].bringServoDown();
-    break;
-  case 'B#':
-    servoNotes[1][0 + stringOffset].bringServoDown();
-    break;
-  case 'B':
-    servoNotes[2][0 + stringOffset].bringServoDown();
-    break;
-  case 'C':
-    servoNotes[3][0 + stringOffset].bringServoDown();
-    break;
-  case 'D#':
-    servoNotes[4][0 + stringOffset].bringServoDown();
-    break;
-  case 'D':
-    servoNotes[5][0 + stringOffset].bringServoDown();
-    break;
-  case 'E#':
-    servoNotes[6][0 + stringOffset].bringServoDown();
-    break;
   case 'E':
-    servoNotes[7][0 + stringOffset].bringServoDown();
     break;
   case 'F':
-    servoNotes[8][0 + stringOffset].bringServoDown();
-    break;
-  case 'G#':
-    servoNotes[9][0 + stringOffset].bringServoDown();
+    servoNotes[1][0 + stringOffset].bringServoDown();
     break;
   case 'G':
-    servoNotes[10][0 + stringOffset].bringServoDown();
+    servoNotes[2][0 + stringOffset].bringServoDown();
+    break;
+  case 'G#':
+    servoNotes[3][0 + stringOffset].bringServoDown();
+    break;
+  case 'A':
+    servoNotes[4][0 + stringOffset].bringServoDown();
     break;
   case 'A#':
+    servoNotes[5][0 + stringOffset].bringServoDown();
+    break;
+  case 'B':
+    servoNotes[6][0 + stringOffset].bringServoDown();
+    break;
+  case 'B#':
+    servoNotes[7][0 + stringOffset].bringServoDown();
+    break;
+  case 'C':
+    servoNotes[8][0 + stringOffset].bringServoDown();
+    break;
+  case 'C#':
+    servoNotes[9][0 + stringOffset].bringServoDown();
+    break;
+  case 'D':
+    servoNotes[10][0 + stringOffset].bringServoDown();
+    break;
+  case 'D#':
     servoNotes[11][0 + stringOffset].bringServoDown();
     break;
+  case 'EH':
+    servoNotes[12][0 + stringOffset].bringServoDown();
+    break;
   }
+  
+  if (isFirstStringBeingUsed) {servoPluck[1].pluckString(); }
+  if (isSecondStringBeingUsed) {servoPluck[2].pluckString(); }
+  if (isThirdStringBeingUsed) {servoPluck[3].pluckString(); }
 }
 
 void reset() { //If it becomes a performance issue than only bring it up if there is an active servo on that string
@@ -161,13 +105,13 @@ void playSong(Note song[])
   int noteChange = 0;
   reset();
   delay(song[noteBeingPlayed].getTiming());
-  playNote(song[noteBeingPlayed].getType());
   isFirstStringBeingUsed = true;
+  playNote(song[noteBeingPlayed].getType());
   noteChange = 1;
   if (song[noteBeingPlayed].getIsPaired())
   {
-    playNote(song[noteBeingPlayed + 1].getType());
     isSecondStringBeingUsed = true;
+    playNote(song[noteBeingPlayed + 1].getType());
     noteChange = 2;
     if (song[noteBeingPlayed + 1].getIsPaired())
     {
@@ -179,51 +123,16 @@ void playSong(Note song[])
   noteBeingPlayed += noteChange;
 }
 
-Note twinkleTwinkleLittleStar[] = {
-    Note(250, 'G', false),
-    Note(250, 'G', false),
-    Note(250, 'D', false),
-    Note(250, 'D', false),
-
-    Note(250, 'E', false),
-    Note(250, 'E', false),
-    Note(500, 'D', false),
-
-    Note(250, 'C', false),
-    Note(250, 'C', false),
-    Note(250, 'B', false),
-    Note(250, 'B', false),
-
-    Note(250, 'A', false),
-    Note(250, 'A', false),
-    Note(500, 'G', false),
-
-    Note(250, 'D', false),
-    Note(250, 'D', false),
-    Note(250, 'C', false),
-    Note(250, 'C', false),
-
-    Note(250, 'B', false),
-    Note(250, 'B', false),
-    Note(500, 'A', false),
-
-    Note(250, 'D', false),
-    Note(250, 'D', false),
-    Note(250, 'C', false),
-    Note(250, 'C', false),
-
-    Note(250, 'B', false),
-    Note(250, 'B', false),
-    Note(500, 'A', false),
-};
+Music music;
 
 void setup() {
+
+  Servo servo;
   Serial.begin(9600);
   initializeServoNotes();
- 
-  // put your setup code here, to run once:
 }
 
 void loop() {
-  playSong(twinkleTwinkleLittleStar);
+  
+  playSong(music.getTwinkleTwinkleLittleStar());
 }
