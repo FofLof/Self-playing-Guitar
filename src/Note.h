@@ -1,4 +1,3 @@
-
 class Note
 {
     int timing;
@@ -7,13 +6,14 @@ class Note
     bool isPaired;
 
 public:
-    Note(int time, int type, bool isPaired)
+    Note(int time, int type)
     {
         timing = time;
         this->type = type;
-        this->isPaired = isPaired;
+    
     }
     int getTiming() { return timing; }
     int getType() { return type; };
     bool getIsPaired() { return isPaired; }
+
 };
